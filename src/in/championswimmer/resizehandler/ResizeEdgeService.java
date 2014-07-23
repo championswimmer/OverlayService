@@ -16,12 +16,11 @@ import android.view.*;
  */
 public class ResizeEdgeService extends Service {
 
-    private ResizeObserver mObserver;
     WindowManager wm;
-    View viewLeft, viewTop;
+    LeftPane viewLeft;
+    View viewTop;
 
     LayoutInflater inflaterLeft, inflaterTop;
-
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -34,31 +33,27 @@ public class ResizeEdgeService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d("Cube26", "onCreate called");
-        mObserver = new ResizeObserver(new Handler());
-        mObserver.observe();
 
-
-        viewLeft = new View(this);
         viewTop = new View(this);
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        inflaterLeft = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        inflaterLeft = LayoutInflater.from(this);
         inflaterTop = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
-
         try {
-            showEdgesIfRequired();
-        } catch (Settings.SettingNotFoundException e) {
+            showEdgesIfRequired(true);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
 
     @Override
     public void onDestroy() {
         Log.d("Cube26", "onDestroy called");
-
+        try {
+            showEdgesIfRequired(false);
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+        }
         super.onDestroy();
     }
 
@@ -70,59 +65,35 @@ public class ResizeEdgeService extends Service {
         return null;
     }
 
-    public void showEdgesIfRequired() throws Settings.SettingNotFoundException {
-        if (Settings.System.getInt(getContentResolver(), "mode_resize") == 1) {
+    public void showEdgesIfRequired(boolean show) throws Settings.SettingNotFoundException {
+        if (show) {
 
             WindowManager.LayoutParams lpLeft = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY-1,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_TOAST,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                     PixelFormat.TRANSLUCENT
             );
             WindowManager.LayoutParams lpTop = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY-1,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_TOAST,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                     PixelFormat.TRANSLUCENT
             );
 
             lpLeft.gravity = Gravity.TOP | Gravity.LEFT;
             lpTop.gravity = Gravity.TOP | Gravity.RIGHT;
-            viewLeft = inflaterLeft.inflate(R.layout.left_pane, null);
+            viewLeft = (LeftPane) inflaterLeft.inflate(R.layout.left_pane, null);
             viewTop = inflaterTop.inflate(R.layout.top_pane, null);
 
             wm.addView(viewLeft, lpLeft);
-            wm.addView(viewTop, lpTop);
+            viewLeft.generateRecentList();
+            //wm.addView(viewTop, lpTop);
         } else {
-            wm.removeView(viewTop);
+            //wm.removeView(viewTop);
             wm.removeView(viewLeft);
-        }
-    }
-
-
-    public class ResizeObserver extends ContentObserver {
-
-        public ResizeObserver(Handler handler) {
-            super(handler);
-        }
-
-        void observe() {
-            getContentResolver().registerContentObserver(Settings.System.getUriFor(
-                    "mode_resize"), false, this);
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            super.onChange(selfChange);
-            Log.d("Cube26", "onChange called");
-
-
-
-            try {
-                showEdgesIfRequired();
-            } catch (Settings.SettingNotFoundException e) {
-                e.printStackTrace();
-            }
-
-
         }
     }
 

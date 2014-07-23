@@ -25,16 +25,16 @@ public class MyActivity extends Activity {
         bOff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Settings.System.putInt(getContentResolver(), "mode_resize", 0);
+                //Settings.System.putInt(getContentResolver(), "mode_resize", 0);
                 Intent i = new Intent(getApplicationContext(), ResizeEdgeService.class);
-                startService(i);
+                stopService(i);
             }
         });
 
         bOn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Settings.System.putInt(getContentResolver(), "mode_resize", 1);
+                //Settings.System.putInt(getContentResolver(), "mode_resize", 1);
 
                 Intent i = new Intent(getApplicationContext(), ResizeEdgeService.class);
                 startService(i);
